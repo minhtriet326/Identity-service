@@ -25,7 +25,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 //@Slf4j
 //@SpringBootTest // để tạo test context
 //@AutoConfigureMockMvc
-//@TestPropertySource("/application.properties")
 //public class UserControllerTest {
 //    @Autowired
 //    private MockMvc mvc;
@@ -149,7 +148,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 //}
 @SpringBootTest
 @AutoConfigureMockMvc
-@TestPropertySource("/application.properties")
+@TestPropertySource("/test.properties") // những cái properties dùng trong test
 public class UserControllerTest {
     @Autowired
     private MockMvc mvc;

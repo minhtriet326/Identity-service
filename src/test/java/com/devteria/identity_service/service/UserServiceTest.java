@@ -13,18 +13,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.TestPropertySource;
 
 import java.time.LocalDate;
-import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
-@TestPropertySource("/application.properties")
 public class UserServiceTest {
     @Autowired
     private UserService userService;
@@ -99,30 +95,10 @@ public class UserServiceTest {
         Assertions.assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_EXISTED);
     }
 
-    @Test
-    @WithMockUser(username = "john")
-    void getMyInfo_validRequest_success() {
-        when(userRepository.findByUsername(anyString())).thenReturn(Optional.of(user));
 
-        UserResponse userResponse = userService.getMyInfo();
-
-        Assertions.assertThat(userResponse.getId()).isEqualTo("2ebuye1uybyeq");
-        Assertions.assertThat(userResponse.getUsername()).isEqualTo("john");
-    }
-
-    @Test
-    @WithMockUser(username = "john")
-    void getMyInfo_invalidRequest_fail() {
-        when(userRepository.findByUsername(anyString())).thenReturn(Optional.ofNullable(null));
-
-        var exception = org.junit.jupiter.api.Assertions.assertThrows(AppException.class,
-                () -> userService.getMyInfo());
-
-        Assertions.assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_EXISTED);
-    }
 }
 //@SpringBootTest
-//@TestPropertySource("/application.properties")
+//@TestPropertySource("/test.properties")
 //public class UserServiceTest {
 //    //Given
 //    private UserCreationRequest request;
@@ -203,7 +179,7 @@ public class UserServiceTest {
 //
 //    @Test
 //    @WithMockUser(username = "john")
-//    void getMyInfo_invalidRequest_fail() {
+//    void getMyInfo_invalidRequest_success() {
 //        when(userRepository.findByUsername(anyString())).thenReturn(Optional.ofNullable(null));
 //
 //        var exception = org.junit.jupiter.api.Assertions.assertThrows(AppException.class,

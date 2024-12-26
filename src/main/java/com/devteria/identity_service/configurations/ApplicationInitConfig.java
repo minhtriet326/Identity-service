@@ -54,7 +54,10 @@ public class ApplicationInitConfig {
     PasswordEncoder passwordEncoder;
 
     @Bean
-    @ConditionalOnProperty(prefix = "spring", value = "driverClassName", havingValue = "com.mysql.cj.jdbc.Driver") // bean chỉ đc init lên khi className là com.mysql.cj.jdbc.Driver
+    @ConditionalOnProperty(prefix = "spring",
+            value = "spring.datasource.driverClassName",
+            havingValue = "com.mysql.cj.jdbc.Driver"
+    ) // bean chỉ đc init lên khi className là com.mysql.cj.jdbc.Driver
     public ApplicationRunner applicationRunner1(UserRepository userRepository) {
         return args -> {
             if (!userRepository.existsByUsername("admin")) {
@@ -73,7 +76,8 @@ public class ApplicationInitConfig {
     }
 
     @Bean
-    @ConditionalOnProperty(prefix = "spring", value = "driverClassName", havingValue = "com.mysql.cj.jdbc.Driver")
+    @ConditionalOnProperty(prefix = "spring", value = "datasource.driverClassName",
+            havingValue = "com.mysql.cj.jdbc.Driver")
     public ApplicationRunner applicationRunner2(InvalidatedTokenRepository invalidatedTokenRepository) {
         return args -> {
             List<InvalidatedToken> invalidatedTokenSet = invalidatedTokenRepository.findAll();
