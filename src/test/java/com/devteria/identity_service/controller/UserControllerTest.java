@@ -3,7 +3,6 @@ package com.devteria.identity_service.controller;
 import com.devteria.identity_service.dtos.requests.UserCreationRequest;
 import com.devteria.identity_service.dtos.responses.UserResponse;
 import com.devteria.identity_service.services.UserService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
