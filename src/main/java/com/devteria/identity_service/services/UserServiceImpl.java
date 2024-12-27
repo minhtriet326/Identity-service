@@ -74,7 +74,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse getUserById(String id) {
         User existingUser = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         return userMapper.toUserResponse(existingUser);
     }

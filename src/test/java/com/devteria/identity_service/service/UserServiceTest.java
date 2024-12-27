@@ -5,8 +5,11 @@ import com.devteria.identity_service.dtos.responses.UserResponse;
 import com.devteria.identity_service.entities.User;
 import com.devteria.identity_service.enums.ErrorCode;
 import com.devteria.identity_service.exceptions.AppException;
+import com.devteria.identity_service.mapper.UserMapper;
+import com.devteria.identity_service.repositories.RoleRepository;
 import com.devteria.identity_service.repositories.UserRepository;
 import com.devteria.identity_service.services.UserService;
+import lombok.With;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,24 +20,31 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.TestPropertySource;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
-@TestPropertySource("/application.properties")
+@TestPropertySource("/application-test.properties")
 public class UserServiceTest {
     @Autowired
     private UserService userService;
 
     @MockBean
     private UserRepository userRepository; // chỉ là mock nên có thể user đc save ko có id
+    @MockBean
+    private RoleRepository roleRepository;
 
-    private UserCreationRequest request;
-    private UserResponse response;
-    private User user;
+    private UserCreationRequest userRequest;
+    private UserResponse userResponse;
+    private User user, user1;
+    private List<User> userList = new ArrayList<>();
+//    private List<UserResponse> userResponseList= new ArrayList<>();
     private LocalDate dob;
 
     @BeforeEach
@@ -42,14 +52,14 @@ public class UserServiceTest {
         // 1. create mock data
         dob = LocalDate.of(2002, 9, 2);
 
-        request = UserCreationRequest.builder()
+        userRequest = UserCreationRequest.builder()
                 .username("john")
                 .password("12345")
                 .firstName("John")
                 .lastName("Doe")
                 .build();
 
-        response = UserResponse.builder()
+        userResponse = UserResponse.builder()
                 .id("2ebuye1uybyeq")
                 .username("john")
                 .firstName("John")
@@ -64,6 +74,16 @@ public class UserServiceTest {
                 .lastName("Doe")
                 .dob(dob)
                 .build();
+        user1 = User.builder()
+                .id("t5fgshjsi8")
+                .username("john1")
+                .firstName("John1")
+                .lastName("Doe1")
+                .dob(dob)
+                .build();
+
+        userList.add(user);
+        userList.add(user1);
     }
 
     @Test
@@ -76,7 +96,7 @@ public class UserServiceTest {
 
         // when
         // 3. call service method
-        var userResponse = userService.createUser(request);
+        var userResponse = userService.createUser(userRequest);
 
         // then
         // 4. assert the result
@@ -87,13 +107,13 @@ public class UserServiceTest {
     @Test
     void createUser_userExisted_fail() {
         // when
-        request.setUsername("Napoli");
+        userRequest.setUsername("Napoli");
         when(userRepository.existsByUsername(anyString())).thenReturn(true);
 
         // then - assert exception
         // 2 tham số: loại ngoại lệ - đoạn code sẽ ném ra nó
         var exception = org.junit.jupiter.api.Assertions.assertThrows(AppException.class, () -> {
-           userService.createUser(request);
+           userService.createUser(userRequest);
         });
 
         Assertions.assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_EXISTED);
@@ -113,19 +133,61 @@ public class UserServiceTest {
     @Test
     @WithMockUser(username = "john")
     void getMyInfo_invalidRequest_fail() {
-        when(userRepository.findByUsername(anyString())).thenReturn(Optional.ofNullable(null));
+        when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
 
         var exception = org.junit.jupiter.api.Assertions.assertThrows(AppException.class,
                 () -> userService.getMyInfo());
 
         Assertions.assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_EXISTED);
     }
+
+    @Test
+    @WithMockUser
+    void getAllUser_validRequest_success() {
+        when(userRepository.findAll()).thenReturn(userList);
+
+        List<UserResponse> userResponseList = userService.getAllUsers();
+
+        Assertions.assertThat(userResponseList).isNotEmpty();
+        org.junit.jupiter.api.Assertions.assertEquals(2, userResponseList.size());
+    }
+
+    @Test
+    @WithMockUser
+    void getAllUser_invalidRequest_emptyList() {
+        when(userRepository.findAll()).thenReturn(new ArrayList<>());
+
+        List<UserResponse> userResponseList = userService.getAllUsers();
+
+        Assertions.assertThat(userResponseList).isEmpty();
+        org.junit.jupiter.api.Assertions.assertEquals(0, userResponseList.size());
+    }
+
+    @Test
+    void getUserById_validRequest_success() {
+        when(userRepository.findById(anyString())).thenReturn(Optional.of(user));
+
+        UserResponse userResponse1 = userService.getUserById("2ebuye1uybyeq");
+
+        Assertions.assertThat(userResponse1).isNotNull();
+        Assertions.assertThat(userResponse1.getId()).isEqualTo("2ebuye1uybyeq");
+    }
+
+    @Test
+    void getUserById_invalidRequest_wrongId() {
+        when(userRepository.findById(anyString())).thenReturn(Optional.ofNullable(null));
+
+        var exception = org.junit.jupiter.api.Assertions.assertThrows(AppException.class,
+                () -> userService.getUserById(anyString()));
+
+        Assertions.assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_EXISTED);
+    }
 }
 //@SpringBootTest
-//@TestPropertySource("/application.properties")
+//@TestPropertySource("/application-test.properties")
 //public class UserServiceTest {
 //    //Given
-//    private UserCreationRequest request;
+//    private UserCreationRequest userRequest;
 //    private UserResponse userResponse;
 //    private User user;
 //    private LocalDate dob;
@@ -138,7 +200,7 @@ public class UserServiceTest {
 //    void initData() {
 //        dob = LocalDate.of(2002, 9, 2);
 //
-//        request = UserCreationRequest.builder()
+//        userRequest = UserCreationRequest.builder()
 //                .username("john")
 //                .password("12345")
 //                .firstName("John")
@@ -170,7 +232,7 @@ public class UserServiceTest {
 //        when(userRepository.save(any())).thenReturn(user);
 //
 //        // call method service
-//        UserResponse response = userService.createUser(request);
+//        UserResponse response = userService.createUser(userRequest);
 //
 //        // assert the results
 //        Assertions.assertThat(userResponse.getId()).isEqualTo("rfw5hdudj890");
@@ -184,7 +246,7 @@ public class UserServiceTest {
 //
 //        // assert the results
 //        var exception = org.junit.jupiter.api.Assertions.assertThrows(AppException.class, () -> {
-//            userService.createUser(request);
+//            userService.createUser(userRequest);
 //        });
 //
 //        Assertions.assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_EXISTED);
