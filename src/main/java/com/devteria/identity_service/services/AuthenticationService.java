@@ -1,26 +1,27 @@
 package com.devteria.identity_service.services;
 
+import java.text.ParseException;
+
 import com.devteria.identity_service.dtos.requests.AuthenticationRequest;
 import com.devteria.identity_service.dtos.requests.IntrospectRequest;
 import com.devteria.identity_service.dtos.requests.LogoutRequest;
 import com.devteria.identity_service.dtos.responses.AuthenticationResponse;
 import com.devteria.identity_service.dtos.responses.IntrospectResponse;
-import com.devteria.identity_service.entities.RefreshToken;
 import com.devteria.identity_service.entities.User;
 import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.KeyLengthException;
-
-import java.text.ParseException;
 
 public interface AuthenticationService {
-    AuthenticationResponse authenticate(AuthenticationRequest request) throws JOSEException;
-    IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException;
-    void logout(LogoutRequest request) throws ParseException, JOSEException;
-    String generateToken(User user);
+  AuthenticationResponse authenticate(AuthenticationRequest request) throws JOSEException;
+
+  IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException;
+
+  void logout(LogoutRequest request) throws ParseException, JOSEException;
+
+  String generateToken(User user);
 }
 
-//public interface AuthenticationService {
+// public interface AuthenticationService {
 //    AuthenticationResponse authenticate(AuthenticationRequest request) throws JOSEException;
 //    IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException;
 //    void logout(LogoutRequest request) throws ParseException, JOSEException;
-//}
+// }

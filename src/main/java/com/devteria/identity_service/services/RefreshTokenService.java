@@ -4,7 +4,9 @@ import com.devteria.identity_service.entities.RefreshToken;
 import com.devteria.identity_service.entities.User;
 
 public interface RefreshTokenService {
-    RefreshToken createRefreshToken(User user);
-    RefreshToken verifyRefreshToken(String refreshToken);
-    void deleteRefreshToken(String refreshToken);
+  RefreshToken createRefreshToken(User user);
+
+  RefreshToken verifyRefreshToken(String refreshToken);
+
+  void deleteRefreshToken(String refreshToken);
 }

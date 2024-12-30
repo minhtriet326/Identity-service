@@ -1,0 +1,3 @@
+jwt:
+  maintenance-time: 7200 # in seconds
+  refreshable-time: 72000 # in seconds

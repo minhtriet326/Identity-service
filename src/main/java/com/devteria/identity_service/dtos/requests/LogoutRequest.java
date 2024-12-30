@@ -3,14 +3,14 @@ package com.devteria.identity_service.dtos.requests;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-//@Data
-//@AllArgsConstructor
-//@NoArgsConstructor
-//@Builder
-//@FieldDefaults(level = AccessLevel.PRIVATE)
-//public class LogoutRequest {
+// @Data
+// @AllArgsConstructor
+// @NoArgsConstructor
+// @Builder
+// @FieldDefaults(level = AccessLevel.PRIVATE)
+// public class LogoutRequest {
 //    String token;
-//}
+// }
 
 @Data
 @AllArgsConstructor
@@ -18,5 +18,5 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class LogoutRequest {
-    String token;
+  String token;
 }

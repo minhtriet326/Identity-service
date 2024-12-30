@@ -1,5 +1,9 @@
 package com.devteria.identity_service.controllers;
 
+import java.text.ParseException;
+
+import org.springframework.web.bind.annotation.*;
+
 import com.devteria.identity_service.dtos.requests.AuthenticationRequest;
 import com.devteria.identity_service.dtos.requests.IntrospectRequest;
 import com.devteria.identity_service.dtos.requests.LogoutRequest;
@@ -12,68 +16,68 @@ import com.devteria.identity_service.entities.User;
 import com.devteria.identity_service.services.AuthenticationService;
 import com.devteria.identity_service.services.RefreshTokenService;
 import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.KeyLengthException;
+
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.web.bind.annotation.*;
-
-import java.text.ParseException;
 
 @RestController
 @RequestMapping("/api/v1/auth")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class AuthenticationController {
-    AuthenticationService authenticationService;
-    RefreshTokenService refreshTokenService;
+  AuthenticationService authenticationService;
+  RefreshTokenService refreshTokenService;
 
-    @PostMapping("/login")
-    public ApiResponse<AuthenticationResponse> login(@RequestBody AuthenticationRequest request)
-            throws JOSEException {
-        return ApiResponse.<AuthenticationResponse>builder()
-                .result(authenticationService.authenticate(request))
-                .build();
-    }
+  @PostMapping("/login")
+  public ApiResponse<AuthenticationResponse> login(@RequestBody AuthenticationRequest request)
+      throws JOSEException {
+    return ApiResponse.<AuthenticationResponse>builder()
+        .result(authenticationService.authenticate(request))
+        .build();
+  }
 
-    @PostMapping("/introspect")
-    public ApiResponse<IntrospectResponse> introspect(@RequestBody IntrospectRequest request)
-            throws ParseException, JOSEException {
-        return ApiResponse.<IntrospectResponse>builder()
-                .result(authenticationService.introspect(request))
-                .build();
-    }
+  @PostMapping("/introspect")
+  public ApiResponse<IntrospectResponse> introspect(@RequestBody IntrospectRequest request)
+      throws ParseException, JOSEException {
+    return ApiResponse.<IntrospectResponse>builder()
+        .result(authenticationService.introspect(request))
+        .build();
+  }
 
-    @PostMapping("/logout")
-    public ApiResponse<Void> logout(@RequestBody LogoutRequest request) throws ParseException, JOSEException {
-        authenticationService.logout(request);
-        return ApiResponse.<Void>builder().build();
-    }
+  @PostMapping("/logout")
+  public ApiResponse<Void> logout(@RequestBody LogoutRequest request)
+      throws ParseException, JOSEException {
+    authenticationService.logout(request);
+    return ApiResponse.<Void>builder().build();
+  }
 
-    @PostMapping("/refresh")
-    public ApiResponse<AuthenticationResponse> refreshAccessToken(@RequestBody RefreshRequest request) {
-        // check RefreshToken
-        RefreshToken refreshToken = refreshTokenService.verifyRefreshToken(request.getRefreshToken());
+  @PostMapping("/refresh")
+  public ApiResponse<AuthenticationResponse> refreshAccessToken(
+      @RequestBody RefreshRequest request) {
+    // check RefreshToken
+    RefreshToken refreshToken = refreshTokenService.verifyRefreshToken(request.getRefreshToken());
 
-        //create accessToken
-        User existingUser = refreshToken.getUser();
+    // create accessToken
+    User existingUser = refreshToken.getUser();
 
-        String accessToken = authenticationService.generateToken(existingUser);
+    String accessToken = authenticationService.generateToken(existingUser);
 
-        return ApiResponse.<AuthenticationResponse>builder()
-                .result(AuthenticationResponse.builder()
-                        .refreshToken(refreshToken.getRefreshToken())
-                        .accessToken(accessToken)
-                        .build())
-                .build();
-    }
+    return ApiResponse.<AuthenticationResponse>builder()
+        .result(
+            AuthenticationResponse.builder()
+                .refreshToken(refreshToken.getRefreshToken())
+                .accessToken(accessToken)
+                .build())
+        .build();
+  }
 }
 
-//@RestController
-//@RequestMapping("/api/v1/auth")
-//@RequiredArgsConstructor
-//@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-//public class AuthenticationController {
+// @RestController
+// @RequestMapping("/api/v1/auth")
+// @RequiredArgsConstructor
+// @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+// public class AuthenticationController {
 //    AuthenticationService authenticationService;
 //
 //    @PostMapping("/login")
@@ -101,4 +105,4 @@ public class AuthenticationController {
 //        return ApiResponse.<Void>builder()
 //                .build();
 //    }
-//}
+// }

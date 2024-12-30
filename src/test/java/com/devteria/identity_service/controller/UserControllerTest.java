@@ -1,10 +1,10 @@
 package com.devteria.identity_service.controller;
 
-import com.devteria.identity_service.dtos.requests.UserCreationRequest;
-import com.devteria.identity_service.dtos.responses.UserResponse;
-import com.devteria.identity_service.services.UserService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import static org.mockito.ArgumentMatchers.any;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+
+import java.time.LocalDate;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
@@ -17,16 +17,17 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
-import java.time.LocalDate;
+import com.devteria.identity_service.dtos.requests.UserCreationRequest;
+import com.devteria.identity_service.dtos.responses.UserResponse;
+import com.devteria.identity_service.services.UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-
-//@Slf4j
-//@SpringBootTest // để tạo test context
-//@AutoConfigureMockMvc
-//@TestPropertySource("/application-test.properties")
-//public class UserControllerTest {
+// @Slf4j
+// @SpringBootTest // để tạo test context
+// @AutoConfigureMockMvc
+// @TestPropertySource("/application-test.properties")
+// public class UserControllerTest {
 //    @Autowired
 //    private MockMvc mvc;
 //    @MockBean // để đưa mock vào context
@@ -62,7 +63,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 //        // GIVEN - input
 //        ObjectMapper mapper = new ObjectMapper();
 //
-//        // "Này, đây là JavaTimeModule, nó sẽ giúp bạn xử lý các kiểu dữ liệu thời gian trong Java 8"
+//        // "Này, đây là JavaTimeModule, nó sẽ giúp bạn xử lý các kiểu dữ liệu thời gian trong Java
+// 8"
 //        mapper.registerModule(new JavaTimeModule());
 //
 //        String content = mapper.writeValueAsString(request);
@@ -77,11 +79,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 //                .andExpect(MockMvcResultMatchers.status().isOk())
 //                .andExpect(MockMvcResultMatchers.jsonPath("code").value(1000));
 //    }
-//}
-//@SpringBootTest
-//@AutoConfigureMockMvc // test controller
-//@ExtendWith(MockitoExtension.class)
-//public class UserControllerTest {
+// }
+// @SpringBootTest
+// @AutoConfigureMockMvc // test controller
+// @ExtendWith(MockitoExtension.class)
+// public class UserControllerTest {
 //    @Autowired
 //    private MockMvc mvc;
 //    private UserCreationRequest request;
@@ -146,72 +148,79 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 //                .andExpect(MockMvcResultMatchers.jsonPath("message")
 //                        .value("Username must be at least 3 characters"));
 //    }
-//}
+// }
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestPropertySource("/application-test.properties")
 public class UserControllerTest {
-    @Autowired
-    private MockMvc mvc;
-    @MockBean
-    private UserService userService;
-    private UserCreationRequest request;
-    private UserResponse response;
-    private LocalDate dob;
+  @Autowired private MockMvc mvc;
 
-    @BeforeEach
-    void initData() {
-        dob = LocalDate.of(2002, 9, 2);
+  @MockBean private UserService userService;
 
-        request = UserCreationRequest.builder()
-                .username("john")
-                .password("12345")
-                .firstName("John")
-                .lastName("Doe")
-                .build();
+  private UserCreationRequest request;
+  private UserResponse response;
+  private LocalDate dob;
 
-        response = UserResponse.builder()
-                .id("2ebuye1uybyeq")
-                .username("john")
-                .firstName("John")
-                .lastName("Doe")
-                .dob(dob)
-                .build();
-    }
+  @BeforeEach
+  void initData() {
+    dob = LocalDate.of(2002, 9, 2);
 
-    @Test
-    void createUser_validRequest_success() throws Exception {
-        // when
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        String content = mapper.writeValueAsString(request);
+    request =
+        UserCreationRequest.builder()
+            .username("john")
+            .password("12345")
+            .firstName("John")
+            .lastName("Doe")
+            .build();
 
-        Mockito.when(userService.createUser(any())).thenReturn(response);
+    response =
+        UserResponse.builder()
+            .id("2ebuye1uybyeq")
+            .username("john")
+            .firstName("John")
+            .lastName("Doe")
+            .dob(dob)
+            .build();
+  }
 
-        // then
-        mvc.perform(post("/api/v1/user/createUser")
-                        .contentType(MediaType.APPLICATION_JSON_VALUE) // Cho server biết dữ liệu (mà request sắp) gửi lên là định dạng JSON
-                        .content(content)) // body của request
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("code").value(1000))
-                .andExpect(MockMvcResultMatchers.jsonPath("result.id").value("2ebuye1uybyeq"))
-                .andExpect(MockMvcResultMatchers.jsonPath("result.lastName").value("Doe"));
-    }
+  @Test
+  void createUser_validRequest_success() throws Exception {
+    // when
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.registerModule(new JavaTimeModule());
+    String content = mapper.writeValueAsString(request);
 
-    @Test
-    void createUser_invalidRequest_fail() throws Exception {
-        request.setUsername("12");
+    Mockito.when(userService.createUser(any())).thenReturn(response);
 
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
+    // then
+    mvc.perform(
+            post("/api/v1/user/createUser")
+                .contentType(
+                    MediaType
+                        .APPLICATION_JSON_VALUE) // Cho server biết dữ liệu (mà request sắp) gửi lên
+                // là
+                // định dạng JSON
+                .content(content)) // body của request
+        .andExpect(MockMvcResultMatchers.status().isOk())
+        .andExpect(MockMvcResultMatchers.jsonPath("code").value(1000))
+        .andExpect(MockMvcResultMatchers.jsonPath("result.id").value("2ebuye1uybyeq"))
+        .andExpect(MockMvcResultMatchers.jsonPath("result.lastName").value("Doe"));
+  }
 
-        String content = mapper.writeValueAsString(request);
+  @Test
+  void createUser_invalidRequest_fail() throws Exception {
+    request.setUsername("12");
 
-        mvc.perform(post("/api/v1/user/createUser")
-                .contentType("application/json")
-                .content(content))
-                .andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.jsonPath("code").value("1003"))
-                .andExpect(MockMvcResultMatchers.jsonPath("message").value("Username must be at least 3 characters"));
-    }
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.registerModule(new JavaTimeModule());
+
+    String content = mapper.writeValueAsString(request);
+
+    mvc.perform(post("/api/v1/user/createUser").contentType("application/json").content(content))
+        .andExpect(MockMvcResultMatchers.status().isBadRequest())
+        .andExpect(MockMvcResultMatchers.jsonPath("code").value("1003"))
+        .andExpect(
+            MockMvcResultMatchers.jsonPath("message")
+                .value("Username must be at least 3 characters"));
+  }
 }

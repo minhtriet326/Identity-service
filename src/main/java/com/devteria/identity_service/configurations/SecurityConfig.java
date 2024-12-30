@@ -1,39 +1,30 @@
 package com.devteria.identity_service.configurations;
 
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import lombok.experimental.NonFinal;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
-import org.springframework.security.oauth2.jose.jws.JwsAlgorithms;
-import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.AuthenticationConverter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
-import javax.crypto.spec.SecretKeySpec;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 
-//@Configuration
-//@EnableWebSecurity
-//@EnableMethodSecurity()
-//public class SecurityConfig {
+// @Configuration
+// @EnableWebSecurity
+// @EnableMethodSecurity()
+// public class SecurityConfig {
 //    private final String[] PUBLIC_ENDPOINTS = {"/api/v1/user/**", "/api/v1/auth/**"};
 //
 //    @Value("${jwt.signerKey}")
@@ -48,16 +39,20 @@ import javax.crypto.spec.SecretKeySpec;
 //    public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
 //        httpSecurity.authorizeHttpRequests(request ->
 //            request
-//                    .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
+//                    .requestMatchers("/v3/api-docs/**", "/swagger-ui.html",
+// "/swagger-ui/**").permitAll()
 //                    .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
-//                    .requestMatchers(HttpMethod.GET, "api/v1/user/getAllUsers").hasAuthority("ROLE_ADMIN")
+//                    .requestMatchers(HttpMethod.GET,
+// "api/v1/user/getAllUsers").hasAuthority("ROLE_ADMIN")
 //                    .anyRequest().authenticated()
 //        );
 //
 //        httpSecurity.oauth2ResourceServer(oauth2 ->
 //                oauth2.jwt(jwt -> jwt.decoder(jwtDecoder())
 //                        .jwtAuthenticationConverter(customJwtAuthenticationConverter()))
-//                        .authenticationEntryPoint(new JwtAuthenticationEntryPoint()));// Lấy token từ header và gọi jwtDecoder
+//                        .authenticationEntryPoint(new JwtAuthenticationEntryPoint()));// Lấy token
+// từ header và gọi
+// jwtDecoder
 //
 //        httpSecurity.csrf(AbstractHttpConfigurer::disable);
 //
@@ -75,7 +70,8 @@ import javax.crypto.spec.SecretKeySpec;
 //    private JwtAuthenticationConverter customJwtAuthenticationConverter() {
 //        JwtAuthenticationConverter authenticationConverter = new JwtAuthenticationConverter();
 //
-//        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+//        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new
+// JwtGrantedAuthoritiesConverter();
 //        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
 //
 //        authenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
@@ -83,7 +79,7 @@ import javax.crypto.spec.SecretKeySpec;
 //        return authenticationConverter;
 //    }
 //
-//}
+// }
 
 @Configuration
 @EnableWebSecurity
@@ -91,46 +87,73 @@ import javax.crypto.spec.SecretKeySpec;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
-    @NonFinal
-    CustomJwtDecoder customJwtDecoder;
-    String[] PUBLIC_REQUESTS = {"/api/v1/user/**", "/api/v1/auth/**"};
+  @NonFinal CustomJwtDecoder customJwtDecoder;
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(10);
-    }
+  private final String[] PUBLIC_REQUESTS = {"/api/v1/user/**", "/api/v1/auth/**"};
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity
-                .csrf(AbstractHttpConfigurer::disable);
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder(10);
+  }
 
-        httpSecurity.authorizeHttpRequests(request ->
-                request
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, PUBLIC_REQUESTS).permitAll()
-                        .anyRequest().authenticated());
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
 
-        httpSecurity
-                .oauth2ResourceServer(oauth ->
-                        oauth.jwt(jwtConfigurer ->
-                                jwtConfigurer.decoder(customJwtDecoder)
-                                        .jwtAuthenticationConverter(customJwtAuthenticationConverter())
-                                )
-                                .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
-                );
+    httpSecurity.authorizeHttpRequests(
+        request ->
+            request
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**")
+                .permitAll()
+                .requestMatchers(HttpMethod.POST, PUBLIC_REQUESTS)
+                .permitAll()
+                .anyRequest()
+                .authenticated());
 
-        return httpSecurity.build();
-    }
+    httpSecurity.oauth2ResourceServer(
+        oauth ->
+            oauth
+                .jwt(
+                    jwtConfigurer ->
+                        jwtConfigurer
+                            .decoder(customJwtDecoder)
+                            .jwtAuthenticationConverter(customJwtAuthenticationConverter()))
+                .authenticationEntryPoint(new JwtAuthenticationEntryPoint()));
 
-    @Bean
-    public JwtAuthenticationConverter customJwtAuthenticationConverter() { // bỏ prefix SCOPE_ mặc định và thay bằng ""
-        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        grantedAuthoritiesConverter.setAuthorityPrefix("");
+    httpSecurity
+        //            .cors(Customizer.withDefaults())
+        .csrf(AbstractHttpConfigurer::disable);
 
-        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        converter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+    return httpSecurity.build();
+  }
 
-        return converter;
-    }
+  @Bean
+  public CorsFilter corsFilter() {
+    CorsConfiguration configuration = new CorsConfiguration();
+
+    configuration.addAllowedOrigin("http://localhost:3000");
+    configuration.addAllowedMethod("*");
+    configuration.addAllowedHeader("*");
+    configuration.setAllowCredentials(true);
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+
+    // tham số đầu tiên thể hiện chúng ta muốn áp dụng cho all các endpoints của chúng ta, tham số 2
+    // là
+    source.registerCorsConfiguration("/**", configuration);
+
+    return new CorsFilter(source);
+  }
+
+  @Bean
+  public JwtAuthenticationConverter
+      customJwtAuthenticationConverter() { // bỏ prefix SCOPE_ mặc định và thay bằng ""
+    JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter =
+        new JwtGrantedAuthoritiesConverter();
+    grantedAuthoritiesConverter.setAuthorityPrefix("");
+
+    JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+    converter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+
+    return converter;
+  }
 }

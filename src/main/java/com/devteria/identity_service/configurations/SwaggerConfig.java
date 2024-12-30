@@ -1,15 +1,16 @@
 package com.devteria.identity_service.configurations;
 
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
-//@Configuration
-//public class SwaggerConfig {
+// @Configuration
+// public class SwaggerConfig {
 //    @Bean
 //    public OpenAPI openAPI() {
 //        Info info = new Info()
@@ -36,7 +37,8 @@ import org.springframework.context.annotation.Configuration;
 ////                .bearerFormat("JWT") // (Optional) format token là JWT
 ////                .type(SecurityScheme.Type.HTTP) // loại xác thực là HTTP
 ////                .scheme("bearer") // sử dụng bearer schema
-////                // ---> Cái này phải phải giữ nguyên là "bearer" vì đây là chuẩn của Bearer token authentication
+////                // ---> Cái này phải phải giữ nguyên là "bearer" vì đây là chuẩn của Bearer
+// token authentication
 ////                .description("Please enter JWT token"); // Mô tả hiển thị trên UI
 ////    }
 //    private SecurityScheme createSecuritySchema() {
@@ -47,28 +49,29 @@ import org.springframework.context.annotation.Configuration;
 //                .bearerFormat("JWT")
 //                .description("Please enter JWT token");
 //    }
-//}
+// }
 
 @Configuration
 public class SwaggerConfig {
-    @Bean
-    public OpenAPI openAPI() {
-        Info info = new Info()
-                .title("Identity service API")
-                .version("1.0")
-                .description("This is Identity service app endpoints");
-        return new OpenAPI()
-                .info(info)
-                .components(new Components().addSecuritySchemes("bearer-token", createSecurityScheme()))
-                .addSecurityItem(new SecurityRequirement().addList("bearer-token"));
-    }
+  @Bean
+  public OpenAPI openAPI() {
+    Info info =
+        new Info()
+            .title("Identity service API")
+            .version("1.0")
+            .description("This is Identity service app endpoints");
+    return new OpenAPI()
+        .info(info)
+        .components(new Components().addSecuritySchemes("bearer-token", createSecurityScheme()))
+        .addSecurityItem(new SecurityRequirement().addList("bearer-token"));
+  }
 
-    private SecurityScheme createSecurityScheme() {
-        return new SecurityScheme()
-                .name("Bearer authentication token")
-                .scheme("bearer")
-                .type(SecurityScheme.Type.HTTP)
-                .bearerFormat("jwt")
-                .description("Please enter JWT token");
-    }
+  private SecurityScheme createSecurityScheme() {
+    return new SecurityScheme()
+        .name("Bearer authentication token")
+        .scheme("bearer")
+        .type(SecurityScheme.Type.HTTP)
+        .bearerFormat("jwt")
+        .description("Please enter JWT token");
+  }
 }

@@ -1,15 +1,14 @@
 package com.devteria.identity_service.service;
 
-import com.devteria.identity_service.dtos.requests.UserCreationRequest;
-import com.devteria.identity_service.dtos.responses.UserResponse;
-import com.devteria.identity_service.entities.User;
-import com.devteria.identity_service.enums.ErrorCode;
-import com.devteria.identity_service.exceptions.AppException;
-import com.devteria.identity_service.mapper.UserMapper;
-import com.devteria.identity_service.repositories.RoleRepository;
-import com.devteria.identity_service.repositories.UserRepository;
-import com.devteria.identity_service.services.UserService;
-import lombok.With;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,173 +18,180 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.TestPropertySource;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
+import com.devteria.identity_service.dtos.requests.UserCreationRequest;
+import com.devteria.identity_service.dtos.responses.UserResponse;
+import com.devteria.identity_service.entities.User;
+import com.devteria.identity_service.enums.ErrorCode;
+import com.devteria.identity_service.exceptions.AppException;
+import com.devteria.identity_service.repositories.RoleRepository;
+import com.devteria.identity_service.repositories.UserRepository;
+import com.devteria.identity_service.services.UserService;
 
 @SpringBootTest
 @TestPropertySource("/application-test.properties")
 public class UserServiceTest {
-    @Autowired
-    private UserService userService;
+  @Autowired private UserService userService;
 
-    @MockBean
-    private UserRepository userRepository; // chỉ là mock nên có thể user đc save ko có id
-    @MockBean
-    private RoleRepository roleRepository;
+  @MockBean private UserRepository userRepository; // chỉ là mock nên có thể user đc save ko có id
 
-    private UserCreationRequest userRequest;
-    private UserResponse userResponse;
-    private User user, user1;
-    private List<User> userList = new ArrayList<>();
-//    private List<UserResponse> userResponseList= new ArrayList<>();
-    private LocalDate dob;
+  @MockBean private RoleRepository roleRepository;
 
-    @BeforeEach
-    void init() {
-        // 1. create mock data
-        dob = LocalDate.of(2002, 9, 2);
+  private UserCreationRequest userRequest;
+  private UserResponse userResponse;
+  private User user, user1;
+  private List<User> userList = new ArrayList<>();
+  //    private List<UserResponse> userResponseList= new ArrayList<>();
+  private LocalDate dob;
 
-        userRequest = UserCreationRequest.builder()
-                .username("john")
-                .password("12345")
-                .firstName("John")
-                .lastName("Doe")
-                .build();
+  @BeforeEach
+  void init() {
+    // 1. create mock data
+    dob = LocalDate.of(2002, 9, 2);
 
-        userResponse = UserResponse.builder()
-                .id("2ebuye1uybyeq")
-                .username("john")
-                .firstName("John")
-                .lastName("Doe")
-                .dob(dob)
-                .build();
+    userRequest =
+        UserCreationRequest.builder()
+            .username("john")
+            .password("12345")
+            .firstName("John")
+            .lastName("Doe")
+            .build();
 
-        user = User.builder()
-                .id("2ebuye1uybyeq")
-                .username("john")
-                .firstName("John")
-                .lastName("Doe")
-                .dob(dob)
-                .build();
-        user1 = User.builder()
-                .id("t5fgshjsi8")
-                .username("john1")
-                .firstName("John1")
-                .lastName("Doe1")
-                .dob(dob)
-                .build();
+    userResponse =
+        UserResponse.builder()
+            .id("2ebuye1uybyeq")
+            .username("john")
+            .firstName("John")
+            .lastName("Doe")
+            .dob(dob)
+            .build();
 
-        userList.add(user);
-        userList.add(user1);
-    }
+    user =
+        User.builder()
+            .id("2ebuye1uybyeq")
+            .username("john")
+            .firstName("John")
+            .lastName("Doe")
+            .dob(dob)
+            .build();
+    user1 =
+        User.builder()
+            .id("t5fgshjsi8")
+            .username("john1")
+            .firstName("John1")
+            .lastName("Doe1")
+            .dob(dob)
+            .build();
 
-    @Test
-    void createUser_validRequest_success() {
-        //Given
-        // 2. define behavior of Repository
-        // 2 cái repository, 1 cái return boolean(existsByUsername), 1 cái return user(.save) nên ta có 2 when
-        when(userRepository.existsByUsername(anyString())).thenReturn(false);// success
-        when(userRepository.save(any())).thenReturn(user);
+    userList.add(user);
+    userList.add(user1);
+  }
 
-        // when
-        // 3. call service method
-        var userResponse = userService.createUser(userRequest);
+  @Test
+  void createUser_validRequest_success() {
+    // Given
+    // 2. define behavior of Repository
+    // 2 cái repository, 1 cái return boolean(existsByUsername), 1 cái return user(.save) nên ta có
+    // 2 when
+    when(userRepository.existsByUsername(anyString())).thenReturn(false); // success
+    when(userRepository.save(any())).thenReturn(user);
 
-        // then
-        // 4. assert the result
-        Assertions.assertThat(userResponse.getId()).isEqualTo("2ebuye1uybyeq");
-        Assertions.assertThat(userResponse.getUsername()).isEqualTo("john");
-    }
+    // when
+    // 3. call service method
+    var userResponse = userService.createUser(userRequest);
 
-    @Test
-    void createUser_userExisted_fail() {
-        // when
-        userRequest.setUsername("Napoli");
-        when(userRepository.existsByUsername(anyString())).thenReturn(true);
+    // then
+    // 4. assert the result
+    Assertions.assertThat(userResponse.getId()).isEqualTo("2ebuye1uybyeq");
+    Assertions.assertThat(userResponse.getUsername()).isEqualTo("john");
+  }
 
-        // then - assert exception
-        // 2 tham số: loại ngoại lệ - đoạn code sẽ ném ra nó
-        var exception = org.junit.jupiter.api.Assertions.assertThrows(AppException.class, () -> {
-           userService.createUser(userRequest);
-        });
+  @Test
+  void createUser_userExisted_fail() {
+    // when
+    userRequest.setUsername("Napoli");
+    when(userRepository.existsByUsername(anyString())).thenReturn(true);
 
-        Assertions.assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_EXISTED);
-    }
+    // then - assert exception
+    // 2 tham số: loại ngoại lệ - đoạn code sẽ ném ra nó
+    var exception =
+        org.junit.jupiter.api.Assertions.assertThrows(
+            AppException.class,
+            () -> {
+              userService.createUser(userRequest);
+            });
 
-    @Test
-    @WithMockUser(username = "john")
-    void getMyInfo_validRequest_success() {
-        when(userRepository.findByUsername(anyString())).thenReturn(Optional.of(user));
+    Assertions.assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_EXISTED);
+  }
 
-        UserResponse userResponse = userService.getMyInfo();
+  @Test
+  @WithMockUser(username = "john")
+  void getMyInfo_validRequest_success() {
+    when(userRepository.findByUsername(anyString())).thenReturn(Optional.of(user));
 
-        Assertions.assertThat(userResponse.getId()).isEqualTo("2ebuye1uybyeq");
-        Assertions.assertThat(userResponse.getUsername()).isEqualTo("john");
-    }
+    UserResponse userResponse = userService.getMyInfo();
 
-    @Test
-    @WithMockUser(username = "john")
-    void getMyInfo_invalidRequest_fail() {
-        when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
+    Assertions.assertThat(userResponse.getId()).isEqualTo("2ebuye1uybyeq");
+    Assertions.assertThat(userResponse.getUsername()).isEqualTo("john");
+  }
 
-        var exception = org.junit.jupiter.api.Assertions.assertThrows(AppException.class,
-                () -> userService.getMyInfo());
+  @Test
+  @WithMockUser(username = "john")
+  void getMyInfo_invalidRequest_fail() {
+    when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
 
-        Assertions.assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_EXISTED);
-    }
+    var exception =
+        org.junit.jupiter.api.Assertions.assertThrows(
+            AppException.class, () -> userService.getMyInfo());
 
-    @Test
-    @WithMockUser
-    void getAllUser_validRequest_success() {
-        when(userRepository.findAll()).thenReturn(userList);
+    Assertions.assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_EXISTED);
+  }
 
-        List<UserResponse> userResponseList = userService.getAllUsers();
+  @Test
+  @WithMockUser
+  void getAllUser_validRequest_success() {
+    when(userRepository.findAll()).thenReturn(userList);
 
-        Assertions.assertThat(userResponseList).isNotEmpty();
-        org.junit.jupiter.api.Assertions.assertEquals(2, userResponseList.size());
-    }
+    List<UserResponse> userResponseList = userService.getAllUsers();
 
-    @Test
-    @WithMockUser
-    void getAllUser_invalidRequest_emptyList() {
-        when(userRepository.findAll()).thenReturn(new ArrayList<>());
+    Assertions.assertThat(userResponseList).isNotEmpty();
+    org.junit.jupiter.api.Assertions.assertEquals(2, userResponseList.size());
+  }
 
-        List<UserResponse> userResponseList = userService.getAllUsers();
+  @Test
+  @WithMockUser
+  void getAllUser_invalidRequest_emptyList() {
+    when(userRepository.findAll()).thenReturn(new ArrayList<>());
 
-        Assertions.assertThat(userResponseList).isEmpty();
-        org.junit.jupiter.api.Assertions.assertEquals(0, userResponseList.size());
-    }
+    List<UserResponse> userResponseList = userService.getAllUsers();
 
-    @Test
-    void getUserById_validRequest_success() {
-        when(userRepository.findById(anyString())).thenReturn(Optional.of(user));
+    Assertions.assertThat(userResponseList).isEmpty();
+    org.junit.jupiter.api.Assertions.assertEquals(0, userResponseList.size());
+  }
 
-        UserResponse userResponse1 = userService.getUserById("2ebuye1uybyeq");
+  @Test
+  void getUserById_validRequest_success() {
+    when(userRepository.findById(anyString())).thenReturn(Optional.of(user));
 
-        Assertions.assertThat(userResponse1).isNotNull();
-        Assertions.assertThat(userResponse1.getId()).isEqualTo("2ebuye1uybyeq");
-    }
+    UserResponse userResponse1 = userService.getUserById("2ebuye1uybyeq");
 
-    @Test
-    void getUserById_invalidRequest_wrongId() {
-        when(userRepository.findById(anyString())).thenReturn(Optional.ofNullable(null));
+    Assertions.assertThat(userResponse1).isNotNull();
+    Assertions.assertThat(userResponse1.getId()).isEqualTo("2ebuye1uybyeq");
+  }
 
-        var exception = org.junit.jupiter.api.Assertions.assertThrows(AppException.class,
-                () -> userService.getUserById(anyString()));
+  @Test
+  void getUserById_invalidRequest_wrongId() {
+    when(userRepository.findById(anyString())).thenReturn(Optional.ofNullable(null));
 
-        Assertions.assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_EXISTED);
-    }
+    var exception =
+        org.junit.jupiter.api.Assertions.assertThrows(
+            AppException.class, () -> userService.getUserById(anyString()));
+
+    Assertions.assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_EXISTED);
+  }
 }
-//@SpringBootTest
-//@TestPropertySource("/application-test.properties")
-//public class UserServiceTest {
+// @SpringBootTest
+// @TestPropertySource("/application-test.properties")
+// public class UserServiceTest {
 //    //Given
 //    private UserCreationRequest userRequest;
 //    private UserResponse userResponse;
@@ -253,7 +259,9 @@ public class UserServiceTest {
 //    }
 //
 //    @Test
-//    @WithMockUser(username = "john", roles = {"USER"}) // dùng khi khi một user cụ thể hoặc một role cụ thể truy cập tài nguyên
+//    @WithMockUser(username = "john", roles = {"USER"}) // dùng khi khi một user cụ thể hoặc một
+// role cụ thể truy cập
+// tài nguyên
 //    void getMyInfo_requestValid_success() {
 //        when(userRepository.findByUsername(anyString())).thenReturn(Optional.of(user));
 //
@@ -273,4 +281,4 @@ public class UserServiceTest {
 //
 //        Assertions.assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_EXISTED);
 //    }
-//}
+// }
