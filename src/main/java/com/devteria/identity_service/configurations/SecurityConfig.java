@@ -1,5 +1,9 @@
 package com.devteria.identity_service.configurations;
 
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -15,11 +19,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
-
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import lombok.experimental.NonFinal;
 
 // @Configuration
 // @EnableWebSecurity
@@ -87,73 +86,74 @@ import lombok.experimental.NonFinal;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
-  @NonFinal CustomJwtDecoder customJwtDecoder;
+    @NonFinal
+    CustomJwtDecoder customJwtDecoder;
 
-  private final String[] PUBLIC_REQUESTS = {"/api/v1/user/**", "/api/v1/auth/**"};
+    private final String[] PUBLIC_REQUESTS = {"/api/v1/user/**", "/api/v1/auth/**"};
 
-  @Bean
-  public PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder(10);
-  }
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(10);
+    }
 
-  @Bean
-  public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
 
-    httpSecurity.authorizeHttpRequests(
-        request ->
-            request
-                .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**")
-                .permitAll()
-                .requestMatchers(HttpMethod.POST, PUBLIC_REQUESTS)
-                .permitAll()
-                .anyRequest()
-                .authenticated());
+        httpSecurity.authorizeHttpRequests(
+                request ->
+                        request
+                                .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**")
+                                .permitAll()
+                                .requestMatchers(HttpMethod.POST, PUBLIC_REQUESTS)
+                                .permitAll()
+                                .anyRequest()
+                                .authenticated());
 
-    httpSecurity.oauth2ResourceServer(
-        oauth ->
-            oauth
-                .jwt(
-                    jwtConfigurer ->
-                        jwtConfigurer
-                            .decoder(customJwtDecoder)
-                            .jwtAuthenticationConverter(customJwtAuthenticationConverter()))
-                .authenticationEntryPoint(new JwtAuthenticationEntryPoint()));
+        httpSecurity.oauth2ResourceServer(
+                oauth ->
+                        oauth
+                                .jwt(
+                                        jwtConfigurer ->
+                                                jwtConfigurer
+                                                        .decoder(customJwtDecoder)
+                                                        .jwtAuthenticationConverter(customJwtAuthenticationConverter()))
+                                .authenticationEntryPoint(new JwtAuthenticationEntryPoint()));
 
-    httpSecurity
-        //            .cors(Customizer.withDefaults())
-        .csrf(AbstractHttpConfigurer::disable);
+        httpSecurity
+                //            .cors(Customizer.withDefaults())
+                .csrf(AbstractHttpConfigurer::disable);
 
-    return httpSecurity.build();
-  }
+        return httpSecurity.build();
+    }
 
-  @Bean
-  public CorsFilter corsFilter() {
-    CorsConfiguration configuration = new CorsConfiguration();
+    @Bean
+    public CorsFilter corsFilter() {
+        CorsConfiguration configuration = new CorsConfiguration();
 
-    configuration.addAllowedOrigin("http://localhost:3000");
-    configuration.addAllowedMethod("*");
-    configuration.addAllowedHeader("*");
-    configuration.setAllowCredentials(true);
+        configuration.addAllowedOrigin("http://localhost:3000");
+        configuration.addAllowedMethod("*");
+        configuration.addAllowedHeader("*");
+        configuration.setAllowCredentials(true);
 
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
-    // tham số đầu tiên thể hiện chúng ta muốn áp dụng cho all các endpoints của chúng ta, tham số 2
-    // là
-    source.registerCorsConfiguration("/**", configuration);
+        // tham số đầu tiên thể hiện chúng ta muốn áp dụng cho all các endpoints của chúng ta, tham số 2
+        // là
+        source.registerCorsConfiguration("/**", configuration);
 
-    return new CorsFilter(source);
-  }
+        return new CorsFilter(source);
+    }
 
-  @Bean
-  public JwtAuthenticationConverter
-      customJwtAuthenticationConverter() { // bỏ prefix SCOPE_ mặc định và thay bằng ""
-    JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter =
-        new JwtGrantedAuthoritiesConverter();
-    grantedAuthoritiesConverter.setAuthorityPrefix("");
+    @Bean
+    public JwtAuthenticationConverter
+    customJwtAuthenticationConverter() { // bỏ prefix SCOPE_ mặc định và thay bằng ""
+        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter =
+                new JwtGrantedAuthoritiesConverter();
+        grantedAuthoritiesConverter.setAuthorityPrefix("");
 
-    JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-    converter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
 
-    return converter;
-  }
+        return converter;
+    }
 }

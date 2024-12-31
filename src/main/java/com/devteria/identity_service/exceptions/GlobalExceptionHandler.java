@@ -1,17 +1,15 @@
 package com.devteria.identity_service.exceptions;
 
-import java.util.Map;
-
+import com.devteria.identity_service.dtos.responses.ApiResponse;
+import com.devteria.identity_service.enums.ErrorCode;
 import jakarta.validation.ConstraintViolation;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import com.devteria.identity_service.dtos.responses.ApiResponse;
-import com.devteria.identity_service.enums.ErrorCode;
+import java.util.Map;
 
 // @ControllerAdvice
 // public class GlobalExceptionHandler {
@@ -131,87 +129,87 @@ import com.devteria.identity_service.enums.ErrorCode;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
-  private final String MIN_ATTRIBUTE = "min";
+    private final String MIN_ATTRIBUTE = "min";
 
-  @ExceptionHandler(AppException.class)
-  public ResponseEntity<ApiResponse> handleAppException(AppException ex) {
-    ErrorCode errorCode = ex.getErrorCode();
+    @ExceptionHandler(AppException.class)
+    public ResponseEntity<ApiResponse> handleAppException(AppException ex) {
+        ErrorCode errorCode = ex.getErrorCode();
 
-    ApiResponse apiResponse = new ApiResponse<>();
+        ApiResponse apiResponse = new ApiResponse<>();
 
-    apiResponse.setCode(errorCode.getCode());
-    apiResponse.setMessage(errorCode.getMessage());
+        apiResponse.setCode(errorCode.getCode());
+        apiResponse.setMessage(errorCode.getMessage());
 
-    return ResponseEntity.status(errorCode.getStatusCode()).body(apiResponse);
-  }
-
-  @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<ApiResponse> handleMethodArgumentNotValidException(
-      MethodArgumentNotValidException ex) {
-    // Chỉ lấy ra message của lỗi đầu tiên được tìm thấy
-    // Nếu có nhiều field bị lỗi, bạn sẽ bỏ qua các lỗi còn lại
-    String enumName = ex.getFieldError().getDefaultMessage();
-
-    ErrorCode errorCode = ErrorCode.INVALID_KEY;
-
-    Map<String, Object> attributes = null;
-
-    try {
-      errorCode = ErrorCode.valueOf(enumName);
-
-      var constraintViolation =
-          ex.getBindingResult().getAllErrors().getFirst().unwrap(ConstraintViolation.class);
-      // chuyển đổi lỗi validation sang đối tượng ConstraintViolation vì nó có nhiều info hơn
-
-      attributes =
-          constraintViolation
-              .getConstraintDescriptor()
-              .getAttributes(); // trả về 1 map các attributes của constraint
-      // @NotBlank(message = "Tên không được để trống", min = 2, max = 50)
-      // -> message: "Tên không được để trống"
-      // min: 2
-      // max: 50
-    } catch (IllegalArgumentException ignored) {
-
+        return ResponseEntity.status(errorCode.getStatusCode()).body(apiResponse);
     }
 
-    ApiResponse apiResponse = new ApiResponse<>();
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse> handleMethodArgumentNotValidException(
+            MethodArgumentNotValidException ex) {
+        // Chỉ lấy ra message của lỗi đầu tiên được tìm thấy
+        // Nếu có nhiều field bị lỗi, bạn sẽ bỏ qua các lỗi còn lại
+        String enumName = ex.getFieldError().getDefaultMessage();
 
-    apiResponse.setCode(errorCode.getCode());
-    apiResponse.setMessage(
-        attributes != null
-            ? mapAttribute(errorCode.getMessage(), attributes)
-            : errorCode.getMessage());
+        ErrorCode errorCode = ErrorCode.INVALID_KEY;
 
-    return ResponseEntity.status(errorCode.getStatusCode()).body(apiResponse);
-  }
+        Map<String, Object> attributes = null;
 
-  @ExceptionHandler(AccessDeniedException.class)
-  public ResponseEntity<ApiResponse> handleAccessDeniedException(AccessDeniedException ex) {
-    ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
+        try {
+            errorCode = ErrorCode.valueOf(enumName);
 
-    return ResponseEntity.status(errorCode.getStatusCode())
-        .body(
-            ApiResponse.builder()
-                .code(errorCode.getCode())
-                .message(errorCode.getMessage())
-                .build());
-  }
+            var constraintViolation =
+                    ex.getBindingResult().getAllErrors().getFirst().unwrap(ConstraintViolation.class);
+            // chuyển đổi lỗi validation sang đối tượng ConstraintViolation vì nó có nhiều info hơn
 
-  @ExceptionHandler(Exception.class)
-  public ResponseEntity<ApiResponse> handleUncategorizedException(Exception ex) {
-    ApiResponse apiResponse = new ApiResponse<>();
+            attributes =
+                    constraintViolation
+                            .getConstraintDescriptor()
+                            .getAttributes(); // trả về 1 map các attributes của constraint
+            // @NotBlank(message = "Tên không được để trống", min = 2, max = 50)
+            // -> message: "Tên không được để trống"
+            // min: 2
+            // max: 50
+        } catch (IllegalArgumentException ignored) {
 
-    apiResponse.setCode(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode());
-    apiResponse.setMessage(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage());
+        }
 
-    return ResponseEntity.status(ErrorCode.UNCATEGORIZED_EXCEPTION.getStatusCode())
-        .body(apiResponse);
-  }
+        ApiResponse apiResponse = new ApiResponse<>();
 
-  private String mapAttribute(String message, Map<String, Object> attributes) {
-    String min = String.valueOf(attributes.get(MIN_ATTRIBUTE)); // return a value of a key
+        apiResponse.setCode(errorCode.getCode());
+        apiResponse.setMessage(
+                attributes != null
+                        ? mapAttribute(errorCode.getMessage(), attributes)
+                        : errorCode.getMessage());
 
-    return message.replace("{" + MIN_ATTRIBUTE + "}", min);
-  }
+        return ResponseEntity.status(errorCode.getStatusCode()).body(apiResponse);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse> handleAccessDeniedException(AccessDeniedException ex) {
+        ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
+
+        return ResponseEntity.status(errorCode.getStatusCode())
+                .body(
+                        ApiResponse.builder()
+                                .code(errorCode.getCode())
+                                .message(errorCode.getMessage())
+                                .build());
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse> handleUncategorizedException(Exception ex) {
+        ApiResponse apiResponse = new ApiResponse<>();
+
+        apiResponse.setCode(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode());
+        apiResponse.setMessage(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage());
+
+        return ResponseEntity.status(ErrorCode.UNCATEGORIZED_EXCEPTION.getStatusCode())
+                .body(apiResponse);
+    }
+
+    private String mapAttribute(String message, Map<String, Object> attributes) {
+        String min = String.valueOf(attributes.get(MIN_ATTRIBUTE)); // return a value of a key
+
+        return message.replace("{" + MIN_ATTRIBUTE + "}", min);
+    }
 }

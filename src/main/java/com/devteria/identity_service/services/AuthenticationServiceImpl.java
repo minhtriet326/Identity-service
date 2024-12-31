@@ -1,16 +1,5 @@
 package com.devteria.identity_service.services;
 
-import java.text.ParseException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.StringJoiner;
-import java.util.UUID;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-
 import com.devteria.identity_service.dtos.requests.AuthenticationRequest;
 import com.devteria.identity_service.dtos.requests.IntrospectRequest;
 import com.devteria.identity_service.dtos.requests.LogoutRequest;
@@ -28,12 +17,21 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.text.ParseException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.StringJoiner;
+import java.util.UUID;
 
 // @Service
 // @RequiredArgsConstructor
@@ -171,152 +169,152 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthenticationServiceImpl implements AuthenticationService {
-  UserRepository userRepository;
-  InvalidatedTokenRepository invalidatedTokenRepository;
+    UserRepository userRepository;
+    InvalidatedTokenRepository invalidatedTokenRepository;
 
-  RefreshTokenService refreshTokenService;
+    RefreshTokenService refreshTokenService;
 
-  PasswordEncoder passwordEncoder;
+    PasswordEncoder passwordEncoder;
 
-  @NonFinal
-  @Value("${jwt.signerKey}")
-  String SIGNER_KEY;
+    @NonFinal
+    @Value("${jwt.signerKey}")
+    String SIGNER_KEY;
 
-  @NonFinal
-  @Value("${jwt.maintenance-time}")
-  long MAINTENANCE_TIME;
+    @NonFinal
+    @Value("${jwt.maintenance-time}")
+    long MAINTENANCE_TIME;
 
-  @Override
-  public AuthenticationResponse authenticate(AuthenticationRequest request) {
-    log.info(SIGNER_KEY);
-    // find user
-    User existingUser =
-        userRepository
-            .findByUsername(request.getUsername())
-            .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+    @Override
+    public AuthenticationResponse authenticate(AuthenticationRequest request) {
+        log.info(SIGNER_KEY);
+        // find user
+        User existingUser =
+                userRepository
+                        .findByUsername(request.getUsername())
+                        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-    boolean authenticate =
-        passwordEncoder.matches(request.getPassword(), existingUser.getPassword());
+        boolean authenticate =
+                passwordEncoder.matches(request.getPassword(), existingUser.getPassword());
 
-    if (!authenticate) {
-      throw new AppException(ErrorCode.UNAUTHENTICATED);
+        if (!authenticate) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(existingUser);
+
+        String token = generateToken(existingUser);
+
+        return AuthenticationResponse.builder()
+                .accessToken(token)
+                .refreshToken(refreshToken.getRefreshToken())
+                .build();
     }
 
-    RefreshToken refreshToken = refreshTokenService.createRefreshToken(existingUser);
+    @Override
+    public IntrospectResponse introspect(IntrospectRequest request) {
+        // verify token
+        boolean isValid = true;
 
-    String token = generateToken(existingUser);
+        try {
+            verifyToken(request.getToken());
+        } catch (Exception ex) {
+            isValid = false;
+        }
 
-    return AuthenticationResponse.builder()
-        .accessToken(token)
-        .refreshToken(refreshToken.getRefreshToken())
-        .build();
-  }
-
-  @Override
-  public IntrospectResponse introspect(IntrospectRequest request) {
-    // verify token
-    boolean isValid = true;
-
-    try {
-      verifyToken(request.getToken());
-    } catch (Exception ex) {
-      isValid = false;
+        return IntrospectResponse.builder().isValid(isValid).build();
     }
 
-    return IntrospectResponse.builder().isValid(isValid).build();
-  }
+    @Override
+    public void logout(LogoutRequest request) throws ParseException, JOSEException {
+        // verify token
+        SignedJWT signedJWT = verifyToken(request.getToken());
 
-  @Override
-  public void logout(LogoutRequest request) throws ParseException, JOSEException {
-    // verify token
-    SignedJWT signedJWT = verifyToken(request.getToken());
+        // create InvalidatedToken
+        InvalidatedToken token =
+                InvalidatedToken.builder()
+                        .id(signedJWT.getJWTClaimsSet().getJWTID())
+                        .expiryTime(signedJWT.getJWTClaimsSet().getExpirationTime())
+                        .build();
 
-    // create InvalidatedToken
-    InvalidatedToken token =
-        InvalidatedToken.builder()
-            .id(signedJWT.getJWTClaimsSet().getJWTID())
-            .expiryTime(signedJWT.getJWTClaimsSet().getExpirationTime())
-            .build();
+        // save new InvalidatedToken
+        invalidatedTokenRepository.save(token);
 
-    // save new InvalidatedToken
-    invalidatedTokenRepository.save(token);
+        // delete refresh token
+        User existingUser =
+                userRepository
+                        .findByUsername(signedJWT.getJWTClaimsSet().getSubject())
+                        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-    // delete refresh token
-    User existingUser =
-        userRepository
-            .findByUsername(signedJWT.getJWTClaimsSet().getSubject())
-            .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
-    refreshTokenService.deleteRefreshToken(existingUser.getRefreshToken().getRefreshToken());
-  }
-
-  private SignedJWT verifyToken(String token) throws JOSEException, ParseException {
-    // valid? expiry?
-    JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
-
-    SignedJWT signedJWT = SignedJWT.parse(token);
-
-    boolean validToken = signedJWT.verify(verifier);
-
-    Date expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
-
-    if (!(validToken && expiryTime.after(new Date()))) {
-      throw new AppException(ErrorCode.UNAUTHENTICATED);
+        refreshTokenService.deleteRefreshToken(existingUser.getRefreshToken().getRefreshToken());
     }
 
-    // exist in InvalidatedToken table ?
-    if (invalidatedTokenRepository.existsById(signedJWT.getJWTClaimsSet().getJWTID()))
-      throw new AppException(ErrorCode.UNAUTHENTICATED);
+    private SignedJWT verifyToken(String token) throws JOSEException, ParseException {
+        // valid? expiry?
+        JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
 
-    return signedJWT;
-  }
+        SignedJWT signedJWT = SignedJWT.parse(token);
 
-  @Override
-  public String generateToken(User user) {
-    JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
+        boolean validToken = signedJWT.verify(verifier);
 
-    JWTClaimsSet claimsSet =
-        new JWTClaimsSet.Builder()
-            .subject(user.getUsername())
-            .issuer("minhtriet")
-            .issueTime(new Date())
-            .expirationTime(
-                new Date(Instant.now().plus(MAINTENANCE_TIME, ChronoUnit.SECONDS).toEpochMilli()))
-            .jwtID(UUID.randomUUID().toString())
-            .claim("scope", buildScope(user))
-            .build();
+        Date expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
 
-    Payload payload = new Payload(claimsSet.toJSONObject());
+        if (!(validToken && expiryTime.after(new Date()))) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
 
-    JWSObject jwsObject = new JWSObject(header, payload);
+        // exist in InvalidatedToken table ?
+        if (invalidatedTokenRepository.existsById(signedJWT.getJWTClaimsSet().getJWTID()))
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
 
-    // sign jwt
-    //        JWSSigner jwsSigner = new MACSigner(SIGNER_KEY.getBytes());
-
-    try {
-      //            jwsObject.sign(jwsSigner);
-      jwsObject.sign(new MACSigner(SIGNER_KEY.getBytes()));
-      return jwsObject.serialize();
-    } catch (JOSEException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private String buildScope(User user) {
-    StringJoiner joiner = new StringJoiner(" ");
-
-    if (!user.getRoles().isEmpty()) {
-      user.getRoles()
-          .forEach(
-              role -> {
-                joiner.add("ROLE_" + role.getName());
-
-                if (!role.getPermissions().isEmpty()) {
-                  role.getPermissions().forEach(permission -> joiner.add(permission.getName()));
-                }
-              });
+        return signedJWT;
     }
 
-    return joiner.toString();
-  }
+    @Override
+    public String generateToken(User user) {
+        JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
+
+        JWTClaimsSet claimsSet =
+                new JWTClaimsSet.Builder()
+                        .subject(user.getUsername())
+                        .issuer("minhtriet")
+                        .issueTime(new Date())
+                        .expirationTime(
+                                new Date(Instant.now().plus(MAINTENANCE_TIME, ChronoUnit.SECONDS).toEpochMilli()))
+                        .jwtID(UUID.randomUUID().toString())
+                        .claim("scope", buildScope(user))
+                        .build();
+
+        Payload payload = new Payload(claimsSet.toJSONObject());
+
+        JWSObject jwsObject = new JWSObject(header, payload);
+
+        // sign jwt
+        //        JWSSigner jwsSigner = new MACSigner(SIGNER_KEY.getBytes());
+
+        try {
+            //            jwsObject.sign(jwsSigner);
+            jwsObject.sign(new MACSigner(SIGNER_KEY.getBytes()));
+            return jwsObject.serialize();
+        } catch (JOSEException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String buildScope(User user) {
+        StringJoiner joiner = new StringJoiner(" ");
+
+        if (!user.getRoles().isEmpty()) {
+            user.getRoles()
+                    .forEach(
+                            role -> {
+                                joiner.add("ROLE_" + role.getName());
+
+                                if (!role.getPermissions().isEmpty()) {
+                                    role.getPermissions().forEach(permission -> joiner.add(permission.getName()));
+                                }
+                            });
+        }
+
+        return joiner.toString();
+    }
 }

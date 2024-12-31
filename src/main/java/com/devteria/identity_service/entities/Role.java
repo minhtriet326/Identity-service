@@ -1,11 +1,15 @@
 package com.devteria.identity_service.entities;
 
-import java.util.Set;
-
-import jakarta.persistence.*;
-
-import lombok.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
+
+import java.util.Set;
 
 @Entity
 @AllArgsConstructor
@@ -13,9 +17,11 @@ import lombok.experimental.FieldDefaults;
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Role {
-  @Id String name;
+    @Id
+    String name;
 
-  String description;
+    String description;
 
-  @ManyToMany Set<Permission> permissions;
+    @ManyToMany
+    Set<Permission> permissions;
 }

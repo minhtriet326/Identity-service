@@ -1,13 +1,12 @@
 package com.devteria.identity_service.configurations;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 // @Configuration
 // public class SwaggerConfig {
@@ -53,25 +52,25 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 
 @Configuration
 public class SwaggerConfig {
-  @Bean
-  public OpenAPI openAPI() {
-    Info info =
-        new Info()
-            .title("Identity service API")
-            .version("1.0")
-            .description("This is Identity service app endpoints");
-    return new OpenAPI()
-        .info(info)
-        .components(new Components().addSecuritySchemes("bearer-token", createSecurityScheme()))
-        .addSecurityItem(new SecurityRequirement().addList("bearer-token"));
-  }
+    @Bean
+    public OpenAPI openAPI() {
+        Info info =
+                new Info()
+                        .title("Identity service API")
+                        .version("1.0")
+                        .description("This is Identity service app endpoints");
+        return new OpenAPI()
+                .info(info)
+                .components(new Components().addSecuritySchemes("bearer-token", createSecurityScheme()))
+                .addSecurityItem(new SecurityRequirement().addList("bearer-token"));
+    }
 
-  private SecurityScheme createSecurityScheme() {
-    return new SecurityScheme()
-        .name("Bearer authentication token")
-        .scheme("bearer")
-        .type(SecurityScheme.Type.HTTP)
-        .bearerFormat("jwt")
-        .description("Please enter JWT token");
-  }
+    private SecurityScheme createSecurityScheme() {
+        return new SecurityScheme()
+                .name("Bearer authentication token")
+                .scheme("bearer")
+                .type(SecurityScheme.Type.HTTP)
+                .bearerFormat("jwt")
+                .description("Please enter JWT token");
+    }
 }

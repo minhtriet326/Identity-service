@@ -1,9 +1,9 @@
 package com.devteria.identity_service.controller;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-
-import java.time.LocalDate;
-
+import com.devteria.identity_service.dtos.requests.UserCreationRequest;
+import com.devteria.identity_service.dtos.responses.UserResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,10 +18,9 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import com.devteria.identity_service.dtos.requests.UserCreationRequest;
-import com.devteria.identity_service.dtos.responses.UserResponse;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.time.LocalDate;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 // @Slf4j
 // @SpringBootTest // để tạo test context
@@ -93,63 +92,65 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 @AutoConfigureMockMvc // test controller
 @Testcontainers
 public class UserControllerIntegrationTest {
-  @Container static final MySQLContainer<?> MY_SQL_CONTAINER = new MySQLContainer<>("mysql:latest");
+    @Container
+    static final MySQLContainer<?> MY_SQL_CONTAINER = new MySQLContainer<>("mysql:latest");
 
-  // properties of MY_SQL_CONTAINER
-  @DynamicPropertySource
-  static void properties(DynamicPropertyRegistry registry) {
-    registry.add("spring.datasource.url", MY_SQL_CONTAINER::getJdbcUrl);
-    registry.add("spring.datasource.username", MY_SQL_CONTAINER::getUsername);
-    registry.add("spring.datasource.password", MY_SQL_CONTAINER::getPassword);
-    registry.add("spring.datasource.driverClassName", MY_SQL_CONTAINER::getDriverClassName);
-    registry.add("spring.jpa.hibernate.ddl-auto", () -> "update");
-  }
+    // properties of MY_SQL_CONTAINER
+    @DynamicPropertySource
+    static void properties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", MY_SQL_CONTAINER::getJdbcUrl);
+        registry.add("spring.datasource.username", MY_SQL_CONTAINER::getUsername);
+        registry.add("spring.datasource.password", MY_SQL_CONTAINER::getPassword);
+        registry.add("spring.datasource.driverClassName", MY_SQL_CONTAINER::getDriverClassName);
+        registry.add("spring.jpa.hibernate.ddl-auto", () -> "update");
+    }
 
-  @Autowired private MockMvc mvc;
+    @Autowired
+    private MockMvc mvc;
 
-  private UserCreationRequest request;
-  private UserResponse response;
-  private LocalDate dob;
+    private UserCreationRequest request;
+    private UserResponse response;
+    private LocalDate dob;
 
-  @BeforeEach
-  void init() {
-    dob = LocalDate.of(2002, 9, 2);
+    @BeforeEach
+    void init() {
+        dob = LocalDate.of(2002, 9, 2);
 
-    request =
-        UserCreationRequest.builder()
-            .username("john")
-            .password("12345")
-            .firstName("John")
-            .lastName("Doe")
-            .build();
+        request =
+                UserCreationRequest.builder()
+                        .username("john")
+                        .password("12345")
+                        .firstName("John")
+                        .lastName("Doe")
+                        .build();
 
-    response =
-        UserResponse.builder()
-            .id("2ebuye1uybyeq")
-            .username("john")
-            .firstName("John")
-            .lastName("Doe")
-            .dob(dob)
-            .build();
-  }
+        response =
+                UserResponse.builder()
+                        .id("2ebuye1uybyeq")
+                        .username("john")
+                        .firstName("John")
+                        .lastName("Doe")
+                        .dob(dob)
+                        .build();
+    }
 
-  @Test
-  void createUser_validRequest_success() throws Exception {
-    // GIVEN - input
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.registerModule(new JavaTimeModule());
-    String content = mapper.writeValueAsString(request);
+    @Test
+    void createUser_validRequest_success() throws Exception {
+        // GIVEN - input
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        String content = mapper.writeValueAsString(request);
 
-    // Then - output
-    var result =
-        mvc.perform(
-                post("/api/v1/user/createUser")
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .content(content))
-            .andExpect(MockMvcResultMatchers.status().isOk())
-            .andExpect(MockMvcResultMatchers.jsonPath("code").value(1000))
-            .andExpect(MockMvcResultMatchers.jsonPath("result.username").value("john"));
-  }
+        // Then - output
+        var result =
+                mvc.perform(
+                                post("/api/v1/user/createUser")
+                                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                        .content(content))
+                        .andExpect(MockMvcResultMatchers.status().isOk())
+                        .andExpect(MockMvcResultMatchers.jsonPath("code").value(1000))
+                        .andExpect(MockMvcResultMatchers.jsonPath("result.username").value("john"));
+    }
 }
 // @SpringBootTest
 // @AutoConfigureMockMvc

@@ -1,11 +1,10 @@
 package com.devteria.identity_service.entities;
 
-import java.util.Date;
-
 import jakarta.persistence.*;
-
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
+import java.util.Date;
 
 @Entity
 @Data
@@ -14,15 +13,15 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class RefreshToken {
-  @Id
-  @GeneratedValue(strategy = GenerationType.UUID)
-  String id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    String id;
 
-  String refreshToken;
+    String refreshToken;
 
-  Date expiryTime;
+    Date expiryTime;
 
-  @OneToOne
-  @JoinColumn(name = "user_id")
-  User user;
+    @OneToOne
+    @JoinColumn(name = "user_id")
+    User user;
 }

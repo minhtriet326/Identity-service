@@ -1,13 +1,13 @@
 package com.devteria.identity_service.controller;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-
-import java.time.LocalDate;
-
+import com.devteria.identity_service.dtos.requests.UserCreationRequest;
+import com.devteria.identity_service.dtos.responses.UserResponse;
+import com.devteria.identity_service.services.UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,11 +17,10 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
-import com.devteria.identity_service.dtos.requests.UserCreationRequest;
-import com.devteria.identity_service.dtos.responses.UserResponse;
-import com.devteria.identity_service.services.UserService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.time.LocalDate;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 // @Slf4j
 // @SpringBootTest // để tạo test context
@@ -153,74 +152,76 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 @AutoConfigureMockMvc
 @TestPropertySource("/application-test.properties")
 public class UserControllerTest {
-  @Autowired private MockMvc mvc;
+    @Autowired
+    private MockMvc mvc;
 
-  @MockBean private UserService userService;
+    @MockBean
+    private UserService userService;
 
-  private UserCreationRequest request;
-  private UserResponse response;
-  private LocalDate dob;
+    private UserCreationRequest request;
+    private UserResponse response;
+    private LocalDate dob;
 
-  @BeforeEach
-  void initData() {
-    dob = LocalDate.of(2002, 9, 2);
+    @BeforeEach
+    void initData() {
+        dob = LocalDate.of(2002, 9, 2);
 
-    request =
-        UserCreationRequest.builder()
-            .username("john")
-            .password("12345")
-            .firstName("John")
-            .lastName("Doe")
-            .build();
+        request =
+                UserCreationRequest.builder()
+                        .username("john")
+                        .password("12345")
+                        .firstName("John")
+                        .lastName("Doe")
+                        .build();
 
-    response =
-        UserResponse.builder()
-            .id("2ebuye1uybyeq")
-            .username("john")
-            .firstName("John")
-            .lastName("Doe")
-            .dob(dob)
-            .build();
-  }
+        response =
+                UserResponse.builder()
+                        .id("2ebuye1uybyeq")
+                        .username("john")
+                        .firstName("John")
+                        .lastName("Doe")
+                        .dob(dob)
+                        .build();
+    }
 
-  @Test
-  void createUser_validRequest_success() throws Exception {
-    // when
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.registerModule(new JavaTimeModule());
-    String content = mapper.writeValueAsString(request);
+    @Test
+    void createUser_validRequest_success() throws Exception {
+        // when
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        String content = mapper.writeValueAsString(request);
 
-    Mockito.when(userService.createUser(any())).thenReturn(response);
+        Mockito.when(userService.createUser(any())).thenReturn(response);
 
-    // then
-    mvc.perform(
-            post("/api/v1/user/createUser")
-                .contentType(
-                    MediaType
-                        .APPLICATION_JSON_VALUE) // Cho server biết dữ liệu (mà request sắp) gửi lên
-                // là
-                // định dạng JSON
-                .content(content)) // body của request
-        .andExpect(MockMvcResultMatchers.status().isOk())
-        .andExpect(MockMvcResultMatchers.jsonPath("code").value(1000))
-        .andExpect(MockMvcResultMatchers.jsonPath("result.id").value("2ebuye1uybyeq"))
-        .andExpect(MockMvcResultMatchers.jsonPath("result.lastName").value("Doe"));
-  }
+        // then
+        mvc.perform(
+                        post("/api/v1/user/createUser")
+                                .contentType(
+                                        MediaType
+                                                .APPLICATION_JSON_VALUE) // Cho server biết dữ liệu (mà request sắp) gửi lên
+                                // là
+                                // định dạng JSON
+                                .content(content)) // body của request
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("code").value(1000))
+                .andExpect(MockMvcResultMatchers.jsonPath("result.id").value("2ebuye1uybyeq"))
+                .andExpect(MockMvcResultMatchers.jsonPath("result.lastName").value("Doe"));
+    }
 
-  @Test
-  void createUser_invalidRequest_fail() throws Exception {
-    request.setUsername("12");
+    @Test
+    void createUser_invalidRequest_fail() throws Exception {
+        request.setUsername("12");
 
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.registerModule(new JavaTimeModule());
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
 
-    String content = mapper.writeValueAsString(request);
+        String content = mapper.writeValueAsString(request);
 
-    mvc.perform(post("/api/v1/user/createUser").contentType("application/json").content(content))
-        .andExpect(MockMvcResultMatchers.status().isBadRequest())
-        .andExpect(MockMvcResultMatchers.jsonPath("code").value("1003"))
-        .andExpect(
-            MockMvcResultMatchers.jsonPath("message")
-                .value("Username must be at least 3 characters"));
-  }
+        mvc.perform(post("/api/v1/user/createUser").contentType("application/json").content(content))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.jsonPath("code").value("1003"))
+                .andExpect(
+                        MockMvcResultMatchers.jsonPath("message")
+                                .value("Username must be at least 3 characters"));
+    }
 }

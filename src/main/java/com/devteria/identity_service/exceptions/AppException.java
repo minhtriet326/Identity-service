@@ -1,7 +1,6 @@
 package com.devteria.identity_service.exceptions;
 
 import com.devteria.identity_service.enums.ErrorCode;
-
 import lombok.Getter;
 
 // @Getter
@@ -16,10 +15,10 @@ import lombok.Getter;
 
 @Getter
 public class AppException extends RuntimeException {
-  private ErrorCode errorCode;
+    private ErrorCode errorCode;
 
-  public AppException(ErrorCode errorCode) {
-    super(errorCode.getMessage());
-    this.errorCode = errorCode;
-  }
+    public AppException(ErrorCode errorCode) {
+        super(errorCode.getMessage());
+        this.errorCode = errorCode;
+    }
 }
